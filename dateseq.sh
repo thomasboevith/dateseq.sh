@@ -132,7 +132,15 @@ fi
 
 # Print sequence
 startepoch=$(date --utc --date="$FIRST" +%s)
+if test "$?" -ne 0; then
+    echo "ERROR: FIRST not valid date: $FIRST"  >&2
+    exit 1
+fi
 endepoch=$(date --utc --date="$LAST" +%s)
+if test "$?" -ne 0; then
+    echo "ERROR: LAST not valid date: $LAST"  >&2
+    exit 1
+fi
 
 if test "$startepoch" -le "$endepoch"; then
     direction="+"
@@ -148,20 +156,16 @@ if test $VERBOSE -eq 1; then
 fi
 
 currentepoch=$startepoch
-date --utc -d"$(LC_TIME=C date -d@$currentepoch)" "+$FORMAT"
-while true; do
-    currentepoch=$(date --utc -d"$(LC_TIME=C date -d@$currentepoch) $direction$gnuincrement" "+%s")
-    if test "$direction" == "+"; then
-        if test "$currentepoch" -le "$endepoch"; then
-            date --utc -d"$(LC_TIME=C date -d@$currentepoch)" "+$FORMAT"
-        else
-            break
-        fi
-    else
-        if test "$currentepoch" -ge "$endepoch"; then
-            date --utc -d"$(LC_TIME=C date -d@$currentepoch)" "+$FORMAT"
-        else
-            break
-        fi
-    fi
-done
+if test "$direction" == "+"; then
+    while test "$currentepoch" -le "$endepoch"; do
+        date --utc -d"$(LC_TIME=C date -d@$currentepoch)" "+$FORMAT"
+        currentepoch=$(date --utc -d"$(LC_TIME=C date -d@$currentepoch) $direction$gnuincrement" "+%s")
+    done
+fi
+
+if test "$direction" == "-"; then
+    while test "$currentepoch" -ge "$endepoch"; do
+        date --utc -d"$(LC_TIME=C date -d@$currentepoch)" "+$FORMAT"
+        currentepoch=$(date --utc -d"$(LC_TIME=C date -d@$currentepoch) $direction$gnuincrement" "+%s")
+    done
+fi
